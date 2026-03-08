@@ -10,8 +10,12 @@ router = APIRouter()
 
 
 @router.post("/")
-def create(product:ProductCreate, db:Session = Depends(get_db)):
-    return crud.create_product(db, product)
+def create_book(book:ProductCreate, db:Session = Depends(get_db)):
+    new_obj = crud.create_book(db, book)
+    return {
+        "message": "Kitob muvaffaqiyatli qo'shildi",
+        "data": new_obj
+    }
 
 @router.get("/")
 def get_all(db:Session = Depends(get_db)):

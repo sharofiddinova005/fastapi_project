@@ -36,3 +36,5 @@ def signup(db: Session, data: SignUpSchema):
         "message": "User yaratildi",
         "username": new_user.username
     })
+
+

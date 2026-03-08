@@ -1,48 +1,33 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from schemas import SignUpSchema, LoginSchema
-from models import User
+from schemas import SignUpSchema, LoginSchema, ProfileUpdateSchema
 import auth
 from fastapi_jwt_auth import AuthJWT
-from fastapi import status
-from werkzeug.security import check_password_hash
 
 auth_ = APIRouter()
 
 
 @auth_.post("/signup")
-def sign_up(data: SignUpSchema, db: Session = Depends(get_db)):
-    return auth.signup(db, data)
+def signup(user: SignUpSchema, db: Session = Depends(get_db)):
+    return auth.signup(db, user)
 
 
 @auth_.post("/login")
-def login(user: LoginSchema,
-          Authorize: AuthJWT = Depends(),
-          db: Session = Depends(get_db)):
-
-    db_user = db.query(User).filter(
-        User.username == user.username
-    ).first()
-
-    if not db_user or not check_password_hash(db_user.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Username yoki parol xato"
-        )
-
-    access_token = Authorize.create_access_token(subject=db_user.username)
-    refresh_token = Authorize.create_refresh_token(subject=db_user.username)
-
-    return {
-        "access_token": access_token,
-        "refresh_token": refresh_token
-    }
+def login(user: LoginSchema, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+    return auth.login_user(db, user, Authorize)
 
 
-@auth_.get("/protected")
-def protected(Authorize: AuthJWT = Depends()):
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
+@auth_.get("/refresh")
+def refresh_token(db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+    return auth.refresh_access_token(db, Authorize)
 
-    return {"user": current_user}
+
+@auth_.get("/profile")
+def profile(db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+    return auth.profile(db, Authorize)
+
+
+@auth_.put("/profile")
+def update_profile(update_data: ProfileUpdateSchema, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()):
+    return auth.update_profile(db, update_data, Authorize)

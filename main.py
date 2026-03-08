@@ -11,7 +11,8 @@ def get_config():
 
 app = FastAPI()
 
+Base.metadata.create_all(bind=engine)
+
 app.include_router(router, prefix="/product")
 app.include_router(auth_, prefix="/auth")
 
-Base.metadata.create_all(bind=engine)
